@@ -58,7 +58,7 @@ IndivLength = 20
 Frame1 = nd.interconnects.Interconnect(xs='ANT Frame', width=50)
 Frame2 = nd.interconnects.Interconnect(xs='Deep Trench', width=50)
 WG_route = nd.interconnects.Interconnect(width=Minimum_Width, radius=Minimum_Radius, xs='SIN Waveguide')
-Metal_route = nd.interconnects.Interconnect(width=1, radius=2.5, xs='Metal Heater') #
+Metal_route = nd.interconnects.Interconnect(width=5, radius=2.5, xs='Metal Heater') #
 Metal_layer = nd.interconnects.Interconnect(width=10, radius=2.5, xs='Top Metal')
 ContactCut = nd.interconnects.Interconnect(width=10, radius=2.5, xs='Metal Pad')
 with nd.Cell('9x9_Frame') as frame:
@@ -253,6 +253,28 @@ def spiral(layer, length, inner_length=0, sep=2):
         nd.Pin('b0').put(b2.pin['b0'])
     return C, l
 
+def var_termination (positioninWidthList, WidthList):
+    IndivLength = 1
+    nd.trace.trace_start(str(positioninWidthList))
+    with nd.Cell('Variable Termination') as variable_termination:
+        for j in range(positioninWidthList, positioninWidthList - len(WidthList), -1):
+            if j == positioninWidthList:
+                WG_route.strt(length=IndivLength, width=WidthList[j]).put()
+                WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
+                WG_route.strt(length=IndivLength, width=0.3).put('a0')
+                last_wg = WG_route.taper(length=IndivLength, width2=WidthList[j - 1], width1=0.3).put('a0')
+            elif j == positioninWidthList - len(WidthList) + 1:
+                WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
+                last_wg = WG_route.strt(length=IndivLength, width=0.3).put('a0').raise_pins(['b0'], ['P_{:}'.format(i)])
+            else:
+                WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
+                WG_route.strt(length=IndivLength, width=0.3).put('a0')
+                last_wg = WG_route.taper(length=IndivLength, width2=WidthList[j - 1], width1=0.3).put('a0')
+    # nd.Pin('a0', pin=last_wg.pin['b0']).put()
+    nd.trace.trace_stop(str(positioninWidthList))
+    var_term_len = nd.trace.trace_length(str(positioninWidthList))
+    return variable_termination, var_term_len
+
 def strt_phaseshifter(length):
     with nd.Cell("PhaseShifter") as phaseshifter:
         Metal_route.strt(length).put()
@@ -276,7 +298,7 @@ with nd.Cell('IO_pins') as IO_Pins:
 
 # ================= Parameter ======================= #
 N = 16
-width_start = 0.1 # laser input width
+width_start = 0.3 # laser input width
 width_end = 0.3 # target waveguide width
 offset_curve = 80      # horizontal offset between 2 adjacent wg
 offset = offset_curve*4
@@ -285,7 +307,8 @@ length_laser = 50     # input laser length
 radius_curve = 50 
 radius_tromb = 50 
 length  =   20     # length of the straight portion before the trombones
-length_OPA = 20
+length_OPA = 5
+IndivLength  = 3
 ####### laser input - split tree #######
 with nd.Cell("16-const-const") as Sixteen_const_const:
     laser1  = laser_input(width = width_start, length = length_laser).put(0,0,-90)
@@ -363,9 +386,11 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
             tromb = trombone(length=path_diff/(12), radius=radius_tromb, width=0.3).put()
 
         OPA_x = tromb.pin['b0'].x + to_OPA_space
-        taper1 = WG_route.taper(length=10, width1=width, width2=width_list[i-1]).put(OPA_x, OPA_y)
-        strt2 = WG_route.strt(length = length_OPA, width =width_list[i-1]).put(taper1.pin['b0'])
-        sbend1  = WG_route.sbend_p2p(pin1=tromb.pin['b0'] , pin2=taper1.pin['a0'], radius=(radius_tromb+ np.abs((i-8)*5))).put()
+        [var_term, var_len] = var_termination(positioninWidthList=i-1, WidthList= width_list);
+        var_term.put( OPA_x+ var_len, OPA_y, 0, flop = True);
+        #taper1 = WG_route.taper(length=10, width1=width, width2=width_list[i-1]).put(OPA_x, OPA_y)
+        #strt2 = WG_route.strt(length = length_OPA, width =width_list[i-1]).put(taper1.pin['b0'])
+        sbend1  = WG_route.sbend_p2p(pin1=tromb.pin['b0'] , pin2=(OPA_x, OPA_y), radius=(radius_tromb+ np.abs((i-8)*5))).put()
         phase_shifter = strt_phaseshifter(length=length+i*offset_split+(N-i)*offset_curve+2*radius_curve).put(wg_x+i*offset_curve+radius_curve, wg_y, -90)
 
         nd.trace.trace_stop()
@@ -416,14 +441,15 @@ with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
 #frame.put(0, 0, 0)
 #IO_Pins.put(0, 0, 0)
 warnings.simplefilter('ignore')
-ic.print_warning(False)
-Sixteen_const_const. put(1000,8200,0)
-print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_const_width.gds")
+#ic.print_warning(False)
+# Sixteen_const_const. put(1000,8200,0)
+# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+# nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_const_width.gds")
 
-Sixteen_golomb_const.put(1000,5500,0)
-print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
+# Sixteen_golomb_const.put(1000,5500,0)
+# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+# nd.export_gds( filename="2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
+
 Sixteen_const_var.put(1000,2900,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_variable_width.gds")
+nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_variable_width_non_flip.gds")

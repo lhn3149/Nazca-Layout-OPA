@@ -11,8 +11,8 @@ RACER-AIM chip for sensor and laser interface to MCU/CPU.
 '''
 import numpy as np
 import nazca as nd
-import AIMPhotonics.RIT_Pcells as ritpcells
-from AIMPhotonics.RIT_route_utils import Connector
+#import AIMPhotonics.RIT_Pcells as ritpcells
+#from AIMPhotonics.RIT_route_utils import Connector
 
 # show all the BBs and layers and xsections
 nd.logfile(__file__)  # create logfile that will list DRC errors
