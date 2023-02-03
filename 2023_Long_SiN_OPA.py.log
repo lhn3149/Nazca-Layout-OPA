@@ -1,4 +1,4 @@
-INFO: logging.py: datetime: 2023-02-01 09:50
+INFO: logging.py: datetime: 2023-02-02 23:03
 INFO: logging.py: logging level: INFO
 INFO: logging.py: Nazca Design version: 0.5.13
 WARNING: mask_layers.py: Reusing an existing layer_name 'DeepTrench'. Use a different layer name or set overwrite=True.

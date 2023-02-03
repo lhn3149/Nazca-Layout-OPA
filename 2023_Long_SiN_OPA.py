@@ -3,7 +3,6 @@ import nazca.demofab as demo
 import numpy as np
 from nazca.interconnects import Interconnect
 import math
-import components
 import warnings
 
 ic = Interconnect(width=0.3, radius=10.0)
@@ -279,7 +278,7 @@ def strt_phaseshifter(length):
     with nd.Cell("PhaseShifter") as phaseshifter:
         Metal_route.strt(length).put()
     return phaseshifter
-    
+
 with nd.Cell('Metal_Pad') as metalpad:
     Metal_layer.strt(length=80, width=80).put(0, 0, 0)
     ContactCut.strt(length=70, width=70).put(5, 0, 0)
@@ -441,15 +440,14 @@ with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
 #frame.put(0, 0, 0)
 #IO_Pins.put(0, 0, 0)
 warnings.simplefilter('ignore')
-#ic.print_warning(False)
-# Sixteen_const_const. put(1000,8200,0)
-# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-# nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_const_width.gds")
+Sixteen_const_const. put(1000,8200,0)
+print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
 
-# Sixteen_golomb_const.put(1000,5500,0)
-# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-# nd.export_gds( filename="2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
+Sixteen_golomb_const.put(1000,5500,0)
+print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
 
 Sixteen_const_var.put(1000,2900,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="2023_Long_SiN_OPA_16_const_distr_variable_width_non_flip.gds")
+nd.export_gds( filename= "E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_variable_width_flip.gds")
