@@ -258,16 +258,16 @@ def var_termination (positioninWidthList, WidthList):
     with nd.Cell('Variable Termination') as variable_termination:
         for j in range(positioninWidthList, positioninWidthList - len(WidthList), -1):
             if j == positioninWidthList:
-                WG_route.strt(length=IndivLength, width=WidthList[j]).put()
+                WG_route.strt(length=IndivLength/2, width=WidthList[j]).put()
                 WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
-                WG_route.strt(length=IndivLength, width=0.3).put('a0')
+                WG_route.strt(length=IndivLength/2, width=0.3).put('a0')
                 last_wg = WG_route.taper(length=IndivLength, width2=WidthList[j - 1], width1=0.3).put('a0')
             elif j == positioninWidthList - len(WidthList) + 1:
                 WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
-                last_wg = WG_route.strt(length=IndivLength, width=0.3).put('a0').raise_pins(['b0'], ['P_{:}'.format(i)])
+                last_wg = WG_route.strt(length=IndivLength/2, width=0.3).put('a0').raise_pins(['b0'], ['P_{:}'.format(i)])
             else:
                 WG_route.taper(length=IndivLength, width1=WidthList[j], width2=0.3).put('a0')
-                WG_route.strt(length=IndivLength, width=0.3).put('a0')
+                WG_route.strt(length=IndivLength/2, width=0.3).put('a0')
                 last_wg = WG_route.taper(length=IndivLength, width2=WidthList[j - 1], width1=0.3).put('a0')
     # nd.Pin('a0', pin=last_wg.pin['b0']).put()
     nd.trace.trace_stop(str(positioninWidthList))
@@ -362,18 +362,19 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
     y_avg = ((split.pin['b0'].y - 2*radius_curve - length - offset_split - (N-1)*offset_curve) + (split.pin['b15'].y - length - 2*radius_curve - N*offset_split))/2# y location of the horizontal mid-point in the array
 
     distribution = [-4.5, -3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9, 4.5]
+    distribution2 = [-4.5, -3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9, 4.5]
     trace_compensation = np.zeros(N)
     trace_compensation = [0, 74.80797157, 149.61592654, 224.4238898, 299.23185307, 374.03981634, 448.84777961, 507.78006236, 508.43724581, 453.13225083, 378.33185307, 303.5238898, 228.71592654, 153.90796327,  79.1, 4.29203673]
     width_list    = [0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45]
     # distribution of waveguide in the OPA
     trace_array = np.zeros(N) # checking total trace length of the each waveguide.
-    to_OPA_space = 200
+    to_OPA_space = (50+8*2)*2
     for i in range(N):
-        nd.trace.trace_start()
+        nd.trace.trace_start("main")
         # name of input and output pin i.e 'a0' 'b0' 'a1' 'b1' etc.
         input_pin = "a" + str(i)
         output_pin = "b" + str(i) 
-        OPA_y = y_avg + distribution[i] # y-location of OPA array given a distribution
+        OPA_y = y_avg + 2*distribution[i] # y-location of OPA array given a distribution
         wg_y = split.pin[output_pin].y
         wg_x = split.pin[output_pin].x
         i = i + 1
@@ -386,15 +387,20 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
 
         
         [var_term, var_len] = var_termination(positioninWidthList=i-1, WidthList= width_list);
-        var_term.put( tromb.pin['b0'].x +var_len, tromb.pin['b0'].y, 0, flop = True);
-        OPA_x = tromb.pin['b0'].x + to_OPA_space + var_len
+        
+        OPA_x = tromb.pin['b0'].x + to_OPA_space
+        var_term.put( OPA_x + var_len, OPA_y, 0, flop = True);
         #taper1 = WG_route.taper(length=10, width1=width, width2=width_list[i-1]).put(OPA_x, OPA_y)
         #strt2 = WG_route.strt(length = length_OPA, width =width_list[i-1]).put(taper1.pin['b0'])
-        sbend1  = WG_route.sbend_p2p(pin1=(tromb.pin['b0'].x +var_len, tromb.pin['b0'].y), pin2=(OPA_x, OPA_y), radius=(radius_tromb+ np.abs((i-8)*5)), width=width_list[i-1]).put()
+        #sbend1  = WG_route.sbend_p2p(pin1=(tromb.pin['b0'].x +var_len, tromb.pin['b0'].y), pin2=(OPA_x, OPA_y), radius=(radius_tromb+ np.abs((i-8)*5)), width=width_list[i-1]).put()
+        sbend1  = WG_route.sbend_p2p(pin1=tromb.pin['b0'], pin2=(OPA_x, OPA_y), radius=radius_tromb+ np.abs((i-8)*2), width=0.3).put()
+        OPA_x2 = OPA_x + var_len + 35
+        OPA_y2 = y_avg + distribution2[i-1]
+        sbend2  = WG_route.sbend_p2p(pin1=(OPA_x + var_len, OPA_y), pin2=(OPA_x2, OPA_y2), radius=50+ np.abs((i-8)*1), width=width_list[i-1]).put()
         phase_shifter = strt_phaseshifter(length=length+i*offset_split+(N-i)*offset_curve+2*radius_curve).put(wg_x+i*offset_curve+radius_curve, wg_y, -90)
 
-        nd.trace.trace_stop()
-        trace_array[i-1] =  nd.trace.trace_length()
+        nd.trace.trace_stop("main")
+        trace_array[i-1] =  nd.trace.trace_length("main")
 with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
     laser1  = laser_input(width = width_start, length = length).put(0,0,-90)
     elm1    = nd.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
@@ -440,15 +446,15 @@ with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
 
 #frame.put(0, 0, 0)
 #IO_Pins.put(0, 0, 0)
-# warnings.simplefilter('ignore')
-Sixteen_const_const. put(1000,8200,0)
-print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
+# # warnings.simplefilter('ignore')
+# Sixteen_const_const. put(1000,8200,0)
+# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+# nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
 
-Sixteen_golomb_const.put(1000,5500,0)
-print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
+# Sixteen_golomb_const.put(1000,5500,0)
+# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+# nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
 
 Sixteen_const_var.put(1000,2900,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename= "E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_variable_width.gds")
+nd.export_gds( filename= "E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_variable_width_var_intermediate.gds")
