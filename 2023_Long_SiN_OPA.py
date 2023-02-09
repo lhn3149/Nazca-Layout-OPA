@@ -57,7 +57,7 @@ IndivLength = 20
 Frame1 = nd.interconnects.Interconnect(xs='ANT Frame', width=50)
 Frame2 = nd.interconnects.Interconnect(xs='Deep Trench', width=50)
 WG_route = nd.interconnects.Interconnect(width=Minimum_Width, radius=Minimum_Radius, xs='SIN Waveguide')
-Metal_route = nd.interconnects.Interconnect(width=5, radius=2.5, xs='Metal Heater') #
+Metal_route = nd.interconnects.Interconnect(width=10, radius=2.5, xs='Metal Heater') #
 Metal_layer = nd.interconnects.Interconnect(width=10, radius=2.5, xs='Top Metal')
 ContactCut = nd.interconnects.Interconnect(width=10, radius=2.5, xs='Metal Pad')
 with nd.Cell('9x9_Frame') as frame:
@@ -253,7 +253,7 @@ def spiral(layer, length, inner_length=0, sep=2):
     return C, l
 
 def var_termination (positioninWidthList, WidthList):
-    IndivLength = 1
+    IndivLength = 2
     nd.trace.trace_start(str(positioninWidthList))
     with nd.Cell('Variable Termination') as variable_termination:
         for j in range(positioninWidthList, positioninWidthList - len(WidthList), -1):
@@ -361,7 +361,7 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
     offset_cross_split = split.pin['b2'].y - split.pin['b1'].y  # vertical offset between 2 adjacent wg not stemmed from same previous-stage wg
     y_avg = ((split.pin['b0'].y - 2*radius_curve - length - offset_split - (N-1)*offset_curve) + (split.pin['b15'].y - length - 2*radius_curve - N*offset_split))/2# y location of the horizontal mid-point in the array
 
-    distribution = [-6.75,-5.85,-4.95,-4.05,-3.15,-2.25,-1.35,-0.45,0.45, 1.35, 2.25, 3.15, 4.05, 4.95, 5.85, 6.75]
+    distribution = [-4.5, -3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9, 4.5]
     trace_compensation = np.zeros(N)
     trace_compensation = [0, 74.80797157, 149.61592654, 224.4238898, 299.23185307, 374.03981634, 448.84777961, 507.78006236, 508.43724581, 453.13225083, 378.33185307, 303.5238898, 228.71592654, 153.90796327,  79.1, 4.29203673]
     width_list    = [0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45, 0.3, 0.35, 0.4, 0.45]
@@ -384,12 +384,13 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
             path_diff = trace_compensation[i-1]
             tromb = trombone(length=path_diff/(12), radius=radius_tromb, width=0.3).put()
 
-        OPA_x = tromb.pin['b0'].x + to_OPA_space
+        
         [var_term, var_len] = var_termination(positioninWidthList=i-1, WidthList= width_list);
-        var_term.put( OPA_x+ var_len, OPA_y, 0, flop = True);
+        var_term.put( tromb.pin['b0'].x +var_len, tromb.pin['b0'].y, 0, flop = True);
+        OPA_x = tromb.pin['b0'].x + to_OPA_space + var_len
         #taper1 = WG_route.taper(length=10, width1=width, width2=width_list[i-1]).put(OPA_x, OPA_y)
         #strt2 = WG_route.strt(length = length_OPA, width =width_list[i-1]).put(taper1.pin['b0'])
-        sbend1  = WG_route.sbend_p2p(pin1=tromb.pin['b0'] , pin2=(OPA_x, OPA_y), radius=(radius_tromb+ np.abs((i-8)*5))).put()
+        sbend1  = WG_route.sbend_p2p(pin1=(tromb.pin['b0'].x +var_len, tromb.pin['b0'].y), pin2=(OPA_x, OPA_y), radius=(radius_tromb+ np.abs((i-8)*5)), width=width_list[i-1]).put()
         phase_shifter = strt_phaseshifter(length=length+i*offset_split+(N-i)*offset_curve+2*radius_curve).put(wg_x+i*offset_curve+radius_curve, wg_y, -90)
 
         nd.trace.trace_stop()
@@ -439,7 +440,7 @@ with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
 
 #frame.put(0, 0, 0)
 #IO_Pins.put(0, 0, 0)
-warnings.simplefilter('ignore')
+# warnings.simplefilter('ignore')
 Sixteen_const_const. put(1000,8200,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
 nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
@@ -450,4 +451,4 @@ nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Lon
 
 Sixteen_const_var.put(1000,2900,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-nd.export_gds( filename= "E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_variable_width_flip.gds")
+nd.export_gds( filename= "E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_variable_width.gds")

@@ -3,6 +3,15 @@ import nazca.demofab as demo
 import numpy as np
 from nazca.interconnects import Interconnect
 
+#   Grating coupler (GC)
+#   Input 
+#       Rmax: the maximum radius
+#       Rmin: the minimum radius | the grating area is Rmax - Rmin which needs to be greater than 90um
+#       angle:  the open angle of the grating coupler
+#       wg_wdth:    output waveguide width from the GC
+#       gc_witdth:  width of the teeth in the GC area
+#       pitch:  pitch between waveguide in GC area | duty cycle can be calculated = wg_wdth/pitch 
+
 Minimum_Radius = 50
 Minimum_Width = 0.3
 IndivLength = 20
@@ -14,59 +23,20 @@ nd.add_layer2xsection('SIN Waveguide', layer=SIN)
 
 WG_route = nd.interconnects.Interconnect(width=Minimum_Width, radius=Minimum_Radius, xs='SIN Waveguide')
   
-def grating_coupler(Rmax, Rmin, angle, wg_wth):
+def grating_coupler(Rmax, Rmin, angle, wg_width, gc_width, pitch):
     with nd.Cell ("grating_coupler") as grating:
-        delR = 0.45
         r = Rmin
+        ang_deg = angle*180/np.pi
         while (r < Rmax):
-            WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-            r = r + delR
-        WG_route.bend(radius = Rmin/2, width= Rmin).put(Rmin/2,0,90)
-        WG_route.strt(length= Rmax, width=0.1).put(Rmin/4, Rmin/4,-135)
-        
+            WG_route.bend(radius = r, width= gc_width, angle = ang_deg).put(r,0,90)
+            r = r + pitch
+        WG_route.bend(radius = Rmin/2, width= Rmin, angle = ang_deg).put(Rmin/2,0,90)
+        WG_route.strt(length= Rmax, width=wg_width).put(Rmin/4 *np.cos(angle/2), Rmin/4*np.sin(angle/2),-180+ang_deg/2)
     return grating
-width = 0.3
-angle2 = 0.4468
-angle1 = np.pi/4
-Rmax = 34
-Rmin = 22
-x_0 = 60
-grating_coupler(Rmax=34, Rmin=22, angle = angle2, wg_wth=0.1).put()
-grating_coupler(Rmax=34, Rmin=22, angle = angle2, wg_wth=0.1).put(50, 50, 90)
-grating_coupler(Rmax=34, Rmin=22, angle = angle2, wg_wth=0.1).put(0, -50, 45)
-grating_coupler(Rmax=34, Rmin=22, angle = angle2, wg_wth=0.1).put(-50, 0, -45)
+angle1 = 0.4468
+Rmax = 300
+Rmin = 150
 
-# r = 10
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-# r = 2
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-# r = 30 
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-# r = 40 
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-# r = 50 
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-# r = 60 
-# WG_route.bend(radius = r, width= 0.3). put (x_0+r*np.cos(angle1), -r*np.sin(angle1), -angle1*180/(2*np.pi))
-
-# delR = 0.45
-# r = Rmin
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmin + delR
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmin + delR
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmin + delR
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmin + delR
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmin + delR
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-# r = Rmax
-# WG_route.bend(radius = r, width= 0.3).put(r,0,90)
-
-# #WG_route.taper(length=Rmin/np.sqrt(2), width1=Rmin*np.sqrt(2), width2=0.1).put(Rmin/2,Rmin/2,-135)
-# WG_route.bend(radius = Rmin/2, width= Rmin).put(Rmin/2,0,90)
-# WG_route.strt(length= 10, width=0.1).put(Rmin/4, Rmin/4,-135)
+grating_coupler(Rmax=Rmax, Rmin=Rmin, angle = angle1, gc_width=0.3, pitch= 0.45, wg_width=0.1).put()
 
 nd.export_gds( filename= "grating.gds")
