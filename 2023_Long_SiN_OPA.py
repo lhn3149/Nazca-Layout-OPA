@@ -311,7 +311,7 @@ IndivLength  = 3
 ####### laser input - split tree #######
 with nd.Cell("16-const-const") as Sixteen_const_const:
     laser1  = laser_input(width = width_start, length = length_laser).put(0,0,-90)
-    elm1    = nd.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
+    elm1    = WG_route.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
     split   = split_tree(N= N ,offset = offset, length=length, width=width).put(elm1.pin['b0'])
 
     ###### Parameters (Cont) ############
@@ -352,7 +352,7 @@ with nd.Cell("16-const-const") as Sixteen_const_const:
         trace_array[i-1] =  nd.trace.trace_length()
 with nd.Cell("16-const-var") as Sixteen_const_var:
     laser1  = laser_input(width = width_start, length = length_laser).put(0,0,-90)
-    elm1    = nd.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
+    elm1    = WG_route.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
     split   = split_tree(N= N ,offset = offset, length=length, width=width).put(elm1.pin['b0'])
 
     ###### Parameters (Cont) ############
@@ -402,7 +402,7 @@ with nd.Cell("16-const-var") as Sixteen_const_var:
         trace_array[i-1] =  nd.trace.trace_length("main")
 with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
     laser1  = laser_input(width = width_start, length = length).put(0,0,-90)
-    elm1    = nd.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
+    elm1    = WG_route.taper(length=5, width1=width_start, width2= width_end).put(laser1.pin['b0'])
     split   = split_tree(N= N ,offset = offset, length=length, width=width).put(elm1.pin['b0'])
 
     ###### Parameters (Cont) ############
@@ -446,13 +446,13 @@ with nd.Cell("16-golomb-const") as Sixteen_golomb_const:
 #frame.put(0, 0, 0)
 #IO_Pins.put(0, 0, 0)
 # # warnings.simplefilter('ignore')
-# Sixteen_const_const. put(1000,8200,0)
-# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-# nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
+Sixteen_const_const. put(1000,8200,0)
+print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_const_distr_const_width.gds")
 
-# Sixteen_golomb_const.put(1000,5500,0)
-# print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
-# nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
+Sixteen_golomb_const.put(1000,5500,0)
+print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
+nd.export_gds( filename="E:\RIT\Spring_23\/nazca\/Nazca-Layout-OPA\gds\/2023_Long_SiN_OPA_16_golomb_distr_const_width.gds")
 
 Sixteen_const_var.put(1000,2900,0)
 print("difference trace length of waveguides: ", np.abs(trace_array-np.max(trace_array)))
